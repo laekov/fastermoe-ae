@@ -1,3 +1,6 @@
 [submodule "chaosflow"]
 	path = chaosflow
 	url = ./chaosflow
+[submodule "fastmoe"]
+	path = fastmoe
+	url = ./fastmoe
