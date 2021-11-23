@@ -3,7 +3,7 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 from fmoe.functions import prepare_forward
-from fmoe.functions import MOEScatter, MOEGather, ensure_comm
+from fmoe.functions import MOEScatter, MOEGather, _ensure_nccl
 from gates import TraceRepGate, RandomGate
 import timer
 from linear import Expert
@@ -16,7 +16,7 @@ dev_name_default = "cuda:0"
 
 
 def _fmoe_general_global_forward(inp, gate, expert_fn, num_expert, world_size):
-    n_runs = 16
+    n_runs = 4
     dist.barrier()
     timer.start('prepare')
     (
@@ -24,7 +24,6 @@ def _fmoe_general_global_forward(inp, gate, expert_fn, num_expert, world_size):
         local_expert_count,
         global_expert_count,
         fwd_expert_count,
-        _,
         fwd_batch_size,
     ) = prepare_forward(gate, num_expert, world_size)
     dist.barrier()
@@ -42,7 +41,6 @@ def _fmoe_general_global_forward(inp, gate, expert_fn, num_expert, world_size):
         x = MOEScatter.apply(
                 inp, pos // topk,
                 local_expert_count, global_expert_count, 
-                torch.zeros(world_size, dtype=torch.bool),
                 fwd_batch_size, world_size
         )
         torch.distributed.barrier()
@@ -51,7 +49,7 @@ def _fmoe_general_global_forward(inp, gate, expert_fn, num_expert, world_size):
     if rank == 0:
         print('Scatter estm {:.4} ms real {:.4f} ms'.format(
             lat_comm * 1e3,
-            timer.get('scatter')[0] * 1e3))
+            timer.get('scatter', window=3)[0] * 1e3))
 
     for _ in range(n_runs):
         timer.start('expert')
@@ -65,7 +63,7 @@ def _fmoe_general_global_forward(inp, gate, expert_fn, num_expert, world_size):
     if rank == 0:
         print('Computation estm {:.4} ms real {:.4f} ms'.format(
             lat_mm * 1e3,
-            timer.get('expert')[0] * 1e3))
+            timer.get('expert', window=3)[0] * 1e3))
 
     out_batch_size = inp.shape[0]
     if len(gate.shape) == 2:
@@ -77,7 +75,6 @@ def _fmoe_general_global_forward(inp, gate, expert_fn, num_expert, world_size):
     x = MOEGather.apply(
             x, pos,
             local_expert_count, global_expert_count,
-            torch.zeros(world_size, dtype=torch.bool),
             out_batch_size, world_size
     )
     torch.distributed.barrier()
@@ -87,7 +84,7 @@ def _fmoe_general_global_forward(inp, gate, expert_fn, num_expert, world_size):
 
 
 def run_trace(rank, world_size, d_model, trace_args):
-    n_runs = 64
+    n_runs = 16 
 
     trace_path, trace_layer, trace_iter = trace_args
     if trace_path.startswith('rand'):
@@ -103,12 +100,13 @@ def run_trace(rank, world_size, d_model, trace_args):
     gen_rep_gate = lambda d_m, n_e, w_s, topk: gate
 
     for i in range(n_runs):
-        x = torch.rand(batch_size, d_model).cuda()
-        ensure_comm(x, None)
+        x = torch.rand(batch_size, d_model, device='cuda')
+        _ensure_nccl(x, None)
 
         x.requires_grad = True
 
         gate_idx, gate_score = gate(x)
+        gate.next()
         torch.cuda.synchronize()
         torch.distributed.barrier()
         timer.start('forward')
@@ -146,7 +144,6 @@ if __name__ == '__main__':
                 trace_args = (trace_path, trace_layer, trace_iter)
                 
                 if rank == 0:
-                    print('===')
                     print('Running trace {} layer {} iteration {}'.format(*trace_args))
 
                 run_trace(rank, world_size, d_model, trace_args)
