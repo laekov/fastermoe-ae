@@ -22,13 +22,42 @@ reinstall() {
 }
 
 fig9() {
-    aelog Running breakdown prediction for fig 9a
+    aelog Running breakdown prediction of fig 9a
     scripts/fig9a.sh
-    aelog Running forward and backward prediction for fig 9b
+    aelog Running forward and backward prediction of fig 9b
     scripts/fig9b.sh
     aelog Plotting fig 9
     python3 plotting/fig9.py
 }
 
-reinstall fastmoe
-fig9
+fig10() {
+    source scripts/fig10.sh
+    # aelog Running baseline per-iteration performance
+    # runtest fastmoe
+    # aelog Running ZerO baselines
+    # run_ds
+    reinstall chaosflow
+    aelog Running ChaosFlow
+    export FMOE_ENABLE_FUSE=1
+    export FMOE_FUSE_GRAN=2
+    export FMOE_ENABLE_DYNREP=1
+    runtest chaosflow
+}
+
+fig13() {
+    source scripts/fig10.sh
+    aelog Running shadowing
+    export FMOE_ENABLE_FUSE=0
+    export FMOE_FUSE_GRAN=0
+    export FMOE_ENABLE_DYNREP=1
+    runtest dynrep
+    export FMOE_ENABLE_FUSE=1
+    export FMOE_FUSE_GRAN=2
+    export FMOE_ENABLE_DYNREP=0
+    runtest smartsch
+}
+
+# reinstall fastmoe
+# fig9
+# fig10
+fig13

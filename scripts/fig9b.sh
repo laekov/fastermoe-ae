@@ -15,7 +15,7 @@ do
             export TRACE_LAYER=$tl
             export TRACE_ITER=$ti
             export MASTER_PORT=$(expr $RANDOM % 10000 + 10000)
-            srun \
+            srun --quiet \
                 -A priority \
                 -p Big \
                 -N 2 \
