@@ -5,9 +5,9 @@ def processlabel(label):
         return 'No optimization'
     if label == 'dynamic' or label.startswith('dynrep'):
         return 'Shadow'
-    if label == 'smart_dynamic':
+    if label == 'smart_dynamic' or label == 'chaosflow':
         return 'Shadow + smart sch.'
-    if label.startswith('smart-scheduling') or label.startswith('smart-schd'):
+    if label.startswith('smart-scheduling') or label.startswith('smart'):
         return 'Smart scheduling'
     if label.startswith('top'):
         return 'Hybrid ' + label

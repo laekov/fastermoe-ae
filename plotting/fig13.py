@@ -63,21 +63,17 @@ def get_deepspeed(prefix, stage, dm):
             
 
 prefixs = ['moe-gpt', 'moe-bert']
-bare_tests = ['fastmoe', 'chaosflow']
+bare_tests = ['fastmoe', 'dynrep', 'smartsch', 'chaosflow']
 
-sers = dict(fastmoe=[], chaosflow=[])
-for t in range(1, 4):
-    sers['ds-{}'.format(t)] = []
-
+sers = dict()
+for t in bare_tests:
+    sers[t] = []
 
 for prefix in prefixs:
     dms = [1024, 4096]
     for dm in dms:
-        for t in range(1, 4):
-            dsi = get_deepspeed(prefix, t, dm)
-            sers['ds-{}'.format(t)].append(dsi)
         for tn in bare_tests:
-            sers[tn].append( get_time(prefix, tn, dm))
+            sers[tn].append(get_time(prefix, tn, dm))
 
 
 fig, ax = plt.subplots()
@@ -85,8 +81,8 @@ fig.set_size_inches(8, 3)
 
 xbase = np.arange(len(dms) * len(prefixs))
 
-baseline = np.array(sers['ds-3'])
-ser_keys = ['ds-{}'.format(i) for i in range(1, 4)] + bare_tests
+baseline = np.array(sers['fastmoe'])
+ser_keys = bare_tests
 wid = .8 / len(ser_keys)
 
 for i, ser in enumerate(ser_keys):
@@ -95,14 +91,14 @@ for i, ser in enumerate(ser_keys):
     ax.bar(xbase + i * wid, su, label=processlabel(ser), width=wid,
            color=color_def[i], hatch=hatch_def[i], edgecolor='black')
 ax.set_xticks(xbase + len(ser_keys) * wid * .5)
-ax.legend(loc='lower left', bbox_to_anchor=(0, 1), ncol=2)
+ax.legend() # loc='lower left', bbox_to_anchor=(0, 1), ncol=2)
 ax.set_ylabel('Speedup')
 #ax.set_xticklabels(sers.keys())
 
-ax.set_ylim(0, 10)
+ax.set_ylim(0, 2)
 ax.plot([4 - wid, 4 - wid], [0, 6], color='black', linestyle='--', linewidth=1)
 
 ax.set_xticklabels(['GPT-S', 'GPT-L', 'BERT-Deep', 'BERT-Deep-L'])
 
-plt.savefig('results/fig10.pdf', bbox_inches='tight')
+plt.savefig('results/fig13.pdf', bbox_inches='tight')
 

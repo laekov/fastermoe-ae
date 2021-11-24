@@ -28,10 +28,6 @@ runtrace() {
 runtest() {
     export TEST_NAME=$1
 
-    export FMOE_ENABLE_FUSE=1
-    export FMOE_FUSE_GRAN=2
-    export FMOE_ENABLE_DYNREP=1
-
     for dm in 1024 4096
     do
         tp=moe-gpt

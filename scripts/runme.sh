@@ -32,16 +32,32 @@ fig9() {
 
 fig10() {
     source scripts/fig10.sh
-    # aelog Running baseline per-iteration performance
-    # runtest fastmoe
-    # aelog Running ZerO baselines
-    # run_ds
+    aelog Running baseline per-iteration performance
+    runtest fastmoe
+    aelog Running ZerO baselines
+    run_ds
     reinstall chaosflow
     aelog Running ChaosFlow
     export FMOE_ENABLE_FUSE=1
     export FMOE_FUSE_GRAN=2
     export FMOE_ENABLE_DYNREP=1
     runtest chaosflow
+    aelog Plotting fig 10
+    python3 plotting/fig10.py
+}
+
+fig11() {
+    aelog Plotting fig 11
+    python3 plotting/fig11.py
+}
+
+fig12() {
+    source scripts/fig12.sh
+    aelog Preparing prediction of fig 12
+    parse_cache
+    sim_cache
+    aelog Plotting fig 12
+    python3 plotting/fig12.py
 }
 
 fig13() {
@@ -51,13 +67,20 @@ fig13() {
     export FMOE_FUSE_GRAN=0
     export FMOE_ENABLE_DYNREP=1
     runtest dynrep
+
+    aelog Running smart schedule
     export FMOE_ENABLE_FUSE=1
     export FMOE_FUSE_GRAN=2
     export FMOE_ENABLE_DYNREP=0
     runtest smartsch
+
+    aelog Plotting fig 13
+    python3 plotting/fig13.py
 }
 
-# reinstall fastmoe
-# fig9
-# fig10
+reinstall fastmoe
+fig9
+fig10
+fig11
+fig12
 fig13

@@ -84,6 +84,6 @@ if __name__ == '__main__':
 
     for tl in range(trace_layer):
         if rank == 0:
-            print('    Iteratio {} Layer {} / {}'.format(trace_iter, tl, trace_layer))
+            print('    Iteration {} Layer {} / {}'.format(trace_iter, tl, trace_layer))
         trace_args = (trace_path, tl, trace_iter)
         run_trace(rank, world_size, d_model, trace_args)

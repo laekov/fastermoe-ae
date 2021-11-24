@@ -9,20 +9,38 @@ import numpy as np
 from haojiepaint import *
 
 
-# In[4]:
+from toposim import Cluster, alltoall, allreduce
+from predict import create_cluster, predict_all2all, predict_computation
 
 
-get_ipython().run_line_magic('run', '../src/sim.py')
+cluster_nico = create_cluster(16)
+cluster_th = Cluster()
+cluster_th.create_nvlink_cluster(16)
 
 
-# In[5]:
+def get_predictions(prefix, layer, iteration, count, d_model):
+    ranks = list(range(16))
+    cluster = cluster_nico
+    filename = f'cache/{prefix}-l{layer:02d}-it{iteration}.pkl'
+    with open(filename, 'rb') as f:
+        flow_mats = pickle.load(f)
+    res = []
+    for i in range(count):
+        flow_mat = flow_mats[i]
+        cluster.reset_traffic()
+        alltoall(cluster, ranks, flow_mat, dsize=4 * d_model)
+        lat_moe = cluster.get_latency()
+        lat_comp = predict_computation(flow_mat, d_model, 2)
+        res.append((lat_moe, lat_comp))
+    return res
+   
 
 
-iters = [20500]
+iters = [80500]
 dms = [1024, 4096]
 
 def get_estm(prefix, dm, iteration, layer):
-    with open(f'sims/{dm}/{prefix}-l{layer}-it{iteration}.pkl', 'r') as f:
+    with open(f'logs/sims/{dm}/{prefix}-l{layer}-it{iteration}.pkl', 'r') as f:
         while True:
             g = eval(f.readline())
             t = eval(f.readline())
@@ -49,13 +67,13 @@ def get_time(prefix, dm, layers=-1):
         layer_time = 0
         last_iter = 0
         timesave = np.zeros(4)
-        for i in iters
-            filename = '{}/times-baseline/dm{}-l{}-it{}.pkl'.format(prefix, dm, layer, i)
+        for i in iters:
+            filename = 'logs/{}/times-fastmoe/dm{}-l{}-it{}.pkl'.format(prefix, dm, layer, i)
             with open(filename, 'rb') as f:
                 t = pickle.load(f)
             tbl = np.array(t).sum(axis=1)
             
-            filename = '{}/times-smart-scheduling-2/dm{}-l{}-it{}.pkl'.format(prefix, dm, layer, i)
+            filename = 'logs/{}/times-smartsch/dm{}-l{}-it{}.pkl'.format(prefix, dm, layer, i)
             with open(filename, 'rb') as f:
                 t = pickle.load(f)
             tov = np.array(t).sum(axis=1)
@@ -68,22 +86,10 @@ def get_time(prefix, dm, layers=-1):
     return results # [np.concatenate(s) for s in zip(*results)]
 
 
-# In[6]:
-
-
-d = get_time('no-balance-2', 1024)
-
-
-# In[7]:
-
-
 ys = []
 
-for s in ['no-balance-gpt-2', 'no-balance-2', 'tianhe']:
-    if s == 'tianhe':
-        dms = [1024, 2048]
-    else:
-        dms = [1024, 4096]
+for s in ['moe-gpt', 'moe-bert']:
+    dms = [1024, 4096]
     for dm in dms:
         d = get_time(s, dm)
         y1, y2 = [], []
@@ -117,16 +123,14 @@ for i, (y1, y2) in enumerate(ys):
     y2 = np.array(y2)
     thmax.append(np.mean(y1))
     rlmax.append(np.mean(y2))
-    print((y2 / y1).max(), (y2 / y1).min(), (y2 / y1).mean())
-print(thmax, np.mean(thmax))
-print(rlmax, np.mean(rlmax))
+
 ax.plot([-1, len(ys)], [1, 1], color='gray', linestyle='--', linewidth=1)
 
 ax.legend(ncol=2, bbox_to_anchor=(0, 1), loc='lower left')
 
 ax.set_xlim(-1 +  wid / 2, len(ys) - wid / 2)
 ax.set_xticks(np.arange(len(ys)))
-ax.set_xticklabels(['GPT-S', 'GPT-L', 'BERT-Deep', 'BERT-Deep-L', 'BERT-Wide', 'BERT-Wide-L'])
+ax.set_xticklabels(['GPT-S', 'GPT-L', 'BERT-Deep', 'BERT-Deep-L'])
 
 x = 4 - 1 / 2 - wid / 30
 ax.plot([x, x], [0, 2], color='black', linestyle='--', linewidth=1)
@@ -134,5 +138,5 @@ ax.plot([x, x], [0, 2], color='black', linestyle='--', linewidth=1)
 ax.set_ylabel('Speedup')
 ax.set_ylim(0, 2.0)
 
-# plt.savefig('outs/theory.pdf', bbox_inches='tight')
+plt.savefig('results/fig12.pdf', bbox_inches='tight')
 
