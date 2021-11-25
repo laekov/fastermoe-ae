@@ -28,5 +28,3 @@ sim_cache() {
         ls cache/* | xargs -P 70 -n 1 python3 benchmarks/flexible_sim.py >logs/sim.log
     done
 }
-
-sim_cache

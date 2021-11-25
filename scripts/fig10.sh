@@ -1,7 +1,5 @@
 #!/bin/bash
 
-NPN=8
-
 runtrace() {
     d=$1
     p=$DUMP_PREFIX/$2

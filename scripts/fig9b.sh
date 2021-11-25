@@ -2,7 +2,6 @@
 
 echo >logs/pred.log
 
-NPN=8
 for tp in $DUMP_PREFIX/moe-gpt $DUMP_PREFIX/moe-bert $DUMP_PREFIX/gshard-gpt
 do
     echo "Running trace $tp"

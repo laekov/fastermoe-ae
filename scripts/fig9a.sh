@@ -1,7 +1,5 @@
 #!/bin/bash
 
-NPN=8
-
 D_MODEL=1024 \
 TRACE_PATH=$DUMP_PREFIX/moe-gpt,$DUMP_PREFIX/moe-bert,$DUMP_PREFIX/gshard-gpt \
 TRACE_LAYER=0,4,8 \

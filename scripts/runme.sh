@@ -2,14 +2,18 @@
 
 export LOG_PREFIX=ChaosFlow-AE
 
+# Update 2 paths below on your own cluster
+export DUMP_PREFIX=/mnt/zoltan/laekov/dump
+export DATA_PREFIX=/home/ppopp_ae/dataset
+# Number of GPUs per node
+export NPN=8
+
 aelog() {
     echo [$LOG_PREFIX $(date)] $@
 }
 
 mkdir -p logs
 mkdir -p results
-
-export DUMP_PREFIX=/mnt/zoltan/laekov/dump
 
 reinstall() {
     aelog Uninstalling previous fastmoe
@@ -78,9 +82,36 @@ fig13() {
     python3 plotting/fig13.py
 }
 
-reinstall fastmoe
-fig9
-fig10
-fig11
-fig12
-fig13
+tab3() {
+    # reinstall fastmoe
+    source scripts/tab3.sh
+
+    # aelog Running FastMoE
+    # BAL_STG=naive pretrain fastmoe
+
+    # aelog Running GShard
+    # pretrain gshard
+
+    # reinstall chaosflow
+
+    # aelog Running BASE Layers
+    # BAL_STG=baseorig pretrain baselayers
+
+    # export FMOE_ENABLE_FUSE=1
+    # export FMOE_FUSE_GRAN=2
+    # export FMOE_ENABLE_DYNREP=1
+    # aelog Running ChaosFlow with only shadow and smart scheduling
+    # BAL_STG=naive pretrain chaosflow
+
+    # aelog Running ChaosFlow with topo-gate
+    # BAL_STG=hir pretrain topogate
+    gentab3 | tee results/table3.txt
+}
+
+# reinstall fastmoe
+# fig9
+# fig10
+# fig11
+# fig12
+# fig13
+tab3
