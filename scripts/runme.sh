@@ -83,35 +83,35 @@ fig13() {
 }
 
 tab3() {
-    # reinstall fastmoe
+    reinstall fastmoe
     source scripts/tab3.sh
 
-    # aelog Running FastMoE
-    # BAL_STG=naive pretrain fastmoe
+    aelog Running FastMoE, training 500 iterations each
+    BAL_STG=naive pretrain fastmoe
 
-    # aelog Running GShard
-    # pretrain gshard
+    aelog Running GShard
+    BAL_STG=gshard pretrain gshard
 
-    # reinstall chaosflow
+    reinstall chaosflow
 
-    # aelog Running BASE Layers
-    # BAL_STG=baseorig pretrain baselayers
+    aelog Running BASE Layers
+    BAL_STG=baseorig pretrain baselayers
 
-    # export FMOE_ENABLE_FUSE=1
-    # export FMOE_FUSE_GRAN=2
-    # export FMOE_ENABLE_DYNREP=1
-    # aelog Running ChaosFlow with only shadow and smart scheduling
-    # BAL_STG=naive pretrain chaosflow
+    export FMOE_ENABLE_FUSE=1
+    export FMOE_FUSE_GRAN=2
+    export FMOE_ENABLE_DYNREP=1
+    aelog Running ChaosFlow with only shadow and smart scheduling
+    BAL_STG=naive pretrain chaosflow
 
-    # aelog Running ChaosFlow with topo-gate
-    # BAL_STG=hir pretrain topogate
+    aelog Running ChaosFlow with topo-gate
+    BAL_STG=hir pretrain topogate
     gentab3 | tee results/table3.txt
 }
 
-# reinstall fastmoe
-# fig9
-# fig10
-# fig11
-# fig12
-# fig13
+reinstall fastmoe
+fig9
+fig10
+fig11
+fig12
+fig13
 tab3
