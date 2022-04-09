@@ -1,6 +1,6 @@
 [submodule "chaosflow"]
 	path = chaosflow
-	url = ./chaosflow
+	url = https://github.com/thu-pacman/fastermoe.git
 [submodule "fastmoe"]
 	path = fastmoe
-	url = ./fastmoe
+	url = https://github.com/laekov/fastmoe.git
